@@ -2,6 +2,8 @@
 #include "persistence.h"
 #include "render.h"
 #include "protocol.h"
+#include "input.h"
+#include "threads.h"
 
 #ifdef __unix__
 #include <stdio.h>
@@ -14,6 +16,8 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/select.h>
+#include <time.h>
 
 struct Client { int sock; };
 
@@ -35,38 +39,6 @@ static int connect_server_simple(const char *host, int port) {
     return fd;
 }
 
-// Thread function: read from the server and print messages
-static void *receiver_thread(void *arg) {
-    (void)arg;
-    // First, read an initial welcome line from the server (text terminated by '\n')
-    char line[512];
-    size_t pos = 0;
-    while (running) {
-        char ch;
-        ssize_t r = recv(sockfd, &ch, 1, 0);
-        if (r <= 0) break;
-        line[pos++] = ch;
-        if (ch == '\n' || pos + 1 >= sizeof(line)) break;
-    }
-    if (pos > 0) {
-        line[pos] = '\0';
-        printf("Server: %s", line);
-    }
-
-    // Then keep reading and echoing any further data (simple behavior)
-    while (running) {
-        char buf[256];
-        ssize_t r = recv(sockfd, buf, sizeof(buf)-1, 0);
-        if (r <= 0) break;
-        buf[r] = '\0';
-        printf("Server: %s", buf);
-        fflush(stdout);
-    }
-
-    running = 0;
-    return NULL;
-}
-
 int client_init(Client *c) {
     (void)c; // no special init required here
     render_init();
@@ -79,7 +51,7 @@ int client_run(Client *c) {
     persistence_load_highscore("highscore.txt", &highscore);
 
     printf("Simple client\n");
-    printf("Commands: type any text and press Enter; q to quit.\n");
+    printf("Commands: use WASD; q to quit.\n");
     printf("Current highscore: %u\n", highscore);
 
     // try to connect to server
@@ -95,33 +67,15 @@ int client_run(Client *c) {
     }
 
     running = 1;
-    pthread_t recv_thread;
-    if (pthread_create(&recv_thread, NULL, receiver_thread, NULL) != 0) {
-        fprintf(stderr, "Failed to create receiver thread\n");
-        close(sockfd);
-        return -1;
-    }
-
-    // main loop: read lines from stdin and send to server
-    char line[128];
-    while (running && fgets(line, sizeof(line), stdin)) {
-        // trim newline
-        line[strcspn(line, "\n")] = '\0';
-        if (line[0] == '\0') continue;
-        if (line[0] == 'q' && line[1] == '\0') {
-            // send quit and exit
-            send(sockfd, "quit", 4, 0);
-            break;
-        }
-        // send the line to the server
-        send(sockfd, line, strlen(line), 0);
-    }
-
-    // signal receiver to stop and wait for it
-    running = 0;
+    pthread_t input_thread, recv_thread;
+    InputThreadArgs input_args = { sockfd, &running };
+    ReceiverThreadArgs recv_args = { sockfd, &running };
+    pthread_create(&input_thread, NULL, input_thread_func, &input_args);
+    pthread_create(&recv_thread, NULL, receiver_thread_func, &recv_args);
+    pthread_join(input_thread, NULL);
+    pthread_join(recv_thread, NULL);
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
-    pthread_join(recv_thread, NULL);
 
     render_shutdown();
     return 0;
@@ -161,8 +115,6 @@ int main(void) {
         if (client_init(&c) != 0) return 1;
         client_run(&c);
         client_destroy(&c);
-        // Optionally, kill server process after client exits
-        kill(pid, SIGTERM);
         return 0;
     }
     printf("Unknown option.\n");

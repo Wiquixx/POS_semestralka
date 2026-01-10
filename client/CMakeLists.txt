@@ -3,6 +3,7 @@ set(CLIENT_SOURCES
     input.c
     persistence.c
     render.c
+    threads.c
 )
 
 add_executable(client ${CLIENT_SOURCES})

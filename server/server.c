@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/time.h>
 
 int server_init(void) { return 0; }
 
@@ -38,23 +39,39 @@ int server_run(void) {
     ssize_t out = send(client, msg, strlen(msg), 0);
     (void)out;
 
-    // Echo loop: read and discard/echo client input until client disconnects
+    char last_dir = DIR_RIGHT;
+    struct timeval last_tick, now;
+    gettimeofday(&last_tick, NULL);
     char buf[256];
-    while (1) {
-        ssize_t r = recv(client, buf, sizeof(buf), 0);
-        if (r > 0) {
-            // echo back what we received (optional)
-            send(client, buf, (size_t)r, 0);
-            continue;
+    int running = 1;
+    while (running) {
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(client, &readfds);
+        struct timeval tv = {0, 100000}; // 100ms
+        int r = select(client+1, &readfds, NULL, NULL, &tv);
+        if (r > 0 && FD_ISSET(client, &readfds)) {
+            ssize_t n = recv(client, buf, sizeof(buf)-1, 0);
+            if (n > 0) {
+                buf[n] = '\0';
+                if (buf[0] == MSG_DIR && n >= 2) {
+                    last_dir = buf[1];
+                } else if (strncmp(buf, MSG_QUIT, 4) == 0) {
+                    running = 0;
+                    break;
+                }
+            } else if (n == 0) {
+                running = 0;
+                break;
+            }
         }
-        if (r == 0) {
-            // client closed connection
-            break;
+        gettimeofday(&now, NULL);
+        if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
+            char msg[16];
+            snprintf(msg, sizeof(msg), "%s%c\n", MSG_LAST_ARROW, last_dir);
+            send(client, msg, strlen(msg), 0);
+            last_tick = now;
         }
-        // error
-        if (errno == EINTR) continue;
-        perror("recv");
-        break;
     }
 
     close(client);

@@ -9,5 +9,10 @@ void input_restore(void);
 // read next key sequence into buf, return number of bytes
 int input_read(char *buf, int bufsize);
 
-#endif // CLIENT_INPUT_H
+// Reads arrow keys and returns DIR_UP/DOWN/LEFT/RIGHT or 0 if not an arrow
+int input_read_arrow(void);
 
+// Reads WASD keys and returns 'W', 'A', 'S', 'D' or 0 if not a movement key
+int input_read_wasd(void);
+
+#endif // CLIENT_INPUT_H
