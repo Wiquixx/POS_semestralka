@@ -4,6 +4,7 @@ set(CLIENT_SOURCES
     persistence.c
     render.c
     threads.c
+    menu.c
 )
 
 add_executable(client ${CLIENT_SOURCES})

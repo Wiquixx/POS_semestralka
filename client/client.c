@@ -4,6 +4,7 @@
 #include "protocol.h"
 #include "input.h"
 #include "threads.h"
+#include "menu.h"
 
 #ifdef __unix__
 #include <stdio.h>
@@ -85,39 +86,29 @@ void client_destroy(Client *c) {
     (void)c; render_shutdown(); }
 
 int main(void) {
-    printf("Menu\n");
-    printf("1 - Start server and connect\n");
-    printf("0 - Quit\n");
-    printf("> ");
-    fflush(stdout);
-    char choice[16];
-    if (!fgets(choice, sizeof(choice), stdin)) return 0;
-    choice[strcspn(choice, "\n")] = '\0';
-    if (strcmp(choice, "0") == 0) {
+    int mode = menu_show_main();
+    if (mode == 3) {
         return 0;
     }
-    if (strcmp(choice, "1") == 0) {
-        // Start server as subprocess
-        pid_t pid = fork();
-        if (pid == 0) {
-            // Child: exec server
-            execl("../server/server", "server", (char*)NULL);
-            perror("Failed to start server");
-            exit(1);
-        } else if (pid < 0) {
-            perror("fork failed");
-            return 1;
-        }
-        // Parent: wait a bit for server to start
-        sleep(1);
-        // Now run client logic
-        Client c;
-        if (client_init(&c) != 0) return 1;
-        client_run(&c);
-        client_destroy(&c);
-        return 0;
+    int obstacles = menu_show_obstacles();
+    // Start server as subprocess
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child: exec server
+        execl("../server/server", "server", (char*)NULL);
+        perror("Failed to start server");
+        exit(1);
+    } else if (pid < 0) {
+        perror("fork failed");
+        return 1;
     }
-    printf("Unknown option.\n");
+    // Parent: wait a bit for server to start
+    sleep(1);
+    // Now run client logic
+    Client c;
+    if (client_init(&c) != 0) return 1;
+    client_run(&c);
+    client_destroy(&c);
     return 0;
 }
 
