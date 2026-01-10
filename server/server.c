@@ -1,9 +1,11 @@
 #include "server.h"
 #include "../client/protocol.h"
 #include "world.h"
+#include "logic.h"
 
 #ifdef __unix__
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -62,6 +64,7 @@ int server_run(void) {
                     size_t y = (unsigned char)buf[2];
                     if (world_create(&game_world, x, y) == 0) {
                         world_initialized = 1;
+                        logic_draw_initial(&game_world); // draw snake on grid
                         printf("World created: %zux%zu\n", x, y);
                         // Print the world grid
                         for (size_t row = 0; row < y; ++row) {
@@ -87,6 +90,7 @@ int server_run(void) {
         gettimeofday(&now, NULL);
         if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
             if (world_initialized) {
+                logic_apply_input(&game_world, last_dir); // move snake forward
                 size_t bufsize = game_world.w * game_world.h + game_world.h + 1;
                 char *worldbuf = malloc(bufsize + 64); // extra for direction
                 if (worldbuf) {

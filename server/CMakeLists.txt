@@ -2,6 +2,7 @@ set(SERVER_SOURCES
     server.c
     logic.c
     world.c
+    snake.c
 )
 
 add_executable(server ${SERVER_SOURCES})
