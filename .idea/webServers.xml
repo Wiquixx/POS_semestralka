@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="23eb971b-b8e4-4805-80b4-736114c96938" name="frios2.uniza.sk">
+        <fileTransfer rootFolder="/home/laszlo3" accessType="SFTP" host="frios2.fri.uniza.sk" port="10022" sshConfigId="a0094843-365e-4efa-bf0a-fdeeab47d507" sshConfig="laszlo3@frios2.fri.uniza.sk:10022 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

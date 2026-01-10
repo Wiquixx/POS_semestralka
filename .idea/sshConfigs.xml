@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="frios2.fri.uniza.sk" id="a0094843-365e-4efa-bf0a-fdeeab47d507" port="10022" nameFormat="DESCRIPTIVE" username="laszlo3" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
