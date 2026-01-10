@@ -63,6 +63,11 @@ void *receiver_thread_func(void *arg) {
             printf("Last direction: %s\n", last_dir);
             fflush(stdout);
         }
+        if (strstr(buf, "quit") || strstr(buf, "MENU")) {
+            printf("Game ended. Press any button to return to menu...\n");
+            *running = 0;
+            break;
+        }
     }
     *running = 0;
     return NULL;

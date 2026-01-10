@@ -128,7 +128,7 @@ int main(void) {
         if (client_init(&c) != 0) return 1;
         client_run(&c);
         client_destroy(&c);
-        return 0;
+        continue; // Show menu again after game ends
     }
 }
 

@@ -10,6 +10,7 @@ typedef struct World {
 
     int game_over; // non-zero when game ended (placeholder)
     unsigned int score; // placeholder score
+    size_t food_x, food_y; // position of food
 } World;
 
 // create a new world (placeholder)

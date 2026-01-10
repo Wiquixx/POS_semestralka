@@ -91,6 +91,11 @@ int server_run(void) {
         if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
             if (world_initialized) {
                 logic_apply_input(&game_world, last_dir); // move snake forward
+                if (game_world.game_over) {
+                    send(client, MSG_QUIT, strlen(MSG_QUIT), 0);
+                    running = 0;
+                    break;
+                }
                 size_t bufsize = game_world.w * game_world.h + game_world.h + 1;
                 char *worldbuf = malloc(bufsize + 64); // extra for direction
                 if (worldbuf) {

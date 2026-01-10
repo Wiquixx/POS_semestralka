@@ -7,6 +7,6 @@
 void logic_apply_input(World *w, char input);
 // Draw initial snake on the world grid
 void logic_draw_initial(World *w);
+void logic_cleanup();
 
 #endif // SERVER_LOGIC_H
-

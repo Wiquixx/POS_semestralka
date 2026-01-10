@@ -5,6 +5,8 @@
 int world_create(World *out, size_t w, size_t h) {
     if (!out) return -1;
     out->w = w; out->h = h;
+    out->food_x = 0;
+    out->food_y = 0;
     if (w == 0 || h == 0) {
         out->grid = NULL;
     } else {
@@ -22,6 +24,7 @@ void world_destroy(World *w) {
     if (!w) return;
     free(w->grid); w->grid = NULL;
     w->w = w->h = 0;
+    w->food_x = w->food_y = 0;
     w->game_over = 0;
     w->score = 0;
 }
