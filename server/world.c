@@ -36,3 +36,15 @@ unsigned int world_get_score(const World *w) {
     if (!w) return 0;
     return w->score;
 }
+
+void world_serialize(const World *w, char *buf) {
+    if (!w || !w->grid || !buf) return;
+    size_t idx = 0;
+    for (size_t row = 0; row < w->h; ++row) {
+        for (size_t col = 0; col < w->w; ++col) {
+            buf[idx++] = w->grid[row * w->w + col];
+        }
+        buf[idx++] = '\n';
+    }
+    buf[idx] = '\0';
+}

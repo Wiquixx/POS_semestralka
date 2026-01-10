@@ -33,37 +33,34 @@ void *receiver_thread_func(void *arg) {
     ReceiverThreadArgs *args = (ReceiverThreadArgs *)arg;
     int sockfd = args->sockfd;
     volatile int *running = args->running;
-    char line[512];
-    size_t pos = 0;
-    // Initial welcome message
+    char buf[2048];
+    char last_dir[64] = "D (RIGHT)";
     while (*running) {
-        char ch;
-        ssize_t r = recv(sockfd, &ch, 1, 0);
-        if (r <= 0) break;
-        line[pos++] = ch;
-        if (ch == '\n' || pos + 1 >= sizeof(line)) break;
-    }
-    if (pos > 0) {
-        line[pos] = '\0';
-        printf("Server: %s", line);
-    }
-    // Main receive/render loop
-    while (*running) {
-        char buf[256];
         ssize_t r = recv(sockfd, buf, sizeof(buf)-1, 0);
         if (r <= 0) break;
         buf[r] = '\0';
-        if (strncmp(buf, MSG_LAST_ARROW, strlen(MSG_LAST_ARROW)) == 0 && r >= (int)strlen(MSG_LAST_ARROW)+1) {
-            char dir = buf[strlen(MSG_LAST_ARROW)];
+        // Find last direction marker
+        char *last_arrow = strstr(buf, MSG_LAST_ARROW);
+        if (last_arrow) {
+            *last_arrow = '\0';
+            // Clear terminal
+#ifdef _WIN32
+            system("cls");
+#else
+            printf("\033[2J\033[H");
+#endif
+            printf("%s", buf); // world
+            // Parse direction
+            char dir = last_arrow[strlen(MSG_LAST_ARROW)];
             const char *dir_str = "?";
             switch (dir) {
                 case DIR_UP: dir_str = "W (UP)"; break;
                 case DIR_DOWN: dir_str = "S (DOWN)"; break;
                 case DIR_LEFT: dir_str = "A (LEFT)"; break;
                 case DIR_RIGHT: dir_str = "D (RIGHT)"; break;
-                default: dir_str = "?"; break;
             }
-            printf("Last direction: %s\n", dir_str);
+            snprintf(last_dir, sizeof(last_dir), "%s", dir_str);
+            printf("Last direction: %s\n", last_dir);
             fflush(stdout);
         }
     }

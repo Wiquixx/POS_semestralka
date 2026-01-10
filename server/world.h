@@ -22,4 +22,7 @@ int world_tick(World *w);
 // get current score
 unsigned int world_get_score(const World *w);
 
+// Serialize world to a string buffer (buffer must be at least w*h+1 bytes)
+void world_serialize(const World *w, char *buf);
+
 #endif // SERVER_WORLD_H

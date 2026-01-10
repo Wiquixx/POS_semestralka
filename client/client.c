@@ -67,6 +67,16 @@ int client_run(Client *c) {
         return -1;
     }
 
+    // Send world size if needed (mode and obstacles must be passed in or made global)
+    extern int g_mode, g_obstacles;
+    if (g_mode == 2 || (g_mode == 1 && g_obstacles == 2)) {
+        unsigned char msg[3];
+        msg[0] = MSG_WORLD_SIZE;
+        msg[1] = (unsigned char)menu_get_x();
+        msg[2] = (unsigned char)menu_get_y();
+        send(sockfd, msg, 3, 0);
+    }
+
     running = 1;
     pthread_t input_thread, recv_thread;
     InputThreadArgs input_args = { sockfd, &running };
@@ -86,30 +96,44 @@ void client_destroy(Client *c) {
     (void)c; render_shutdown(); }
 
 int main(void) {
-    int mode = menu_show_main();
-    if (mode == 3) {
+    int mode, obstacles;
+    while (1) {
+        mode = menu_show_main();
+        if (mode == 3) {
+            return 0;
+        }
+        obstacles = menu_show_obstacles();
+        if (obstacles == -1) {
+            continue; // restart menu on invalid X/Y input
+        }
+        // Start server as subprocess
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Child: exec server
+            execl("../server/server", "server", (char*)NULL);
+            perror("Failed to start server");
+            exit(1);
+        } else if (pid < 0) {
+            perror("fork failed");
+            return 1;
+        }
+        // Parent: wait a bit for server to start
+        sleep(1);
+        // Now run client logic
+        Client c;
+        // Set globals for mode/obstacles
+        extern int g_mode, g_obstacles;
+        g_mode = mode;
+        g_obstacles = obstacles;
+        if (client_init(&c) != 0) return 1;
+        client_run(&c);
+        client_destroy(&c);
         return 0;
     }
-    int obstacles = menu_show_obstacles();
-    // Start server as subprocess
-    pid_t pid = fork();
-    if (pid == 0) {
-        // Child: exec server
-        execl("../server/server", "server", (char*)NULL);
-        perror("Failed to start server");
-        exit(1);
-    } else if (pid < 0) {
-        perror("fork failed");
-        return 1;
-    }
-    // Parent: wait a bit for server to start
-    sleep(1);
-    // Now run client logic
-    Client c;
-    if (client_init(&c) != 0) return 1;
-    client_run(&c);
-    client_destroy(&c);
-    return 0;
 }
 
 #endif
+
+// Add global variables for mode and obstacles
+int g_mode = 0;
+int g_obstacles = 0;

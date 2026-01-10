@@ -5,5 +5,9 @@
 int menu_show_main(void);
 // Shows the obstacles menu, returns selected obstacles (1=with, 2=without)
 int menu_show_obstacles(void);
+// Getters for menu values
+int menu_get_time(void);
+int menu_get_x(void);
+int menu_get_y(void);
 
 #endif // MENU_H

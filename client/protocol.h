@@ -16,6 +16,7 @@ typedef struct {
 // Messages exchanged
 #define MSG_DIR 'D' // followed by one byte: U/D/L/R
 #define MSG_QUIT "quit"
+#define MSG_WORLD_SIZE 'W' // followed by two bytes: X, Y
 
 // Movement directions for WASD
 #define DIR_UP    'W'
@@ -27,4 +28,3 @@ typedef struct {
 #define MSG_LAST_ARROW "LAST:"
 
 #endif // CLIENT_PROTOCOL_H
-

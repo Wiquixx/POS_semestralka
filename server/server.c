@@ -1,5 +1,6 @@
 #include "server.h"
 #include "../client/protocol.h"
+#include "world.h"
 
 #ifdef __unix__
 #include <stdio.h>
@@ -44,6 +45,8 @@ int server_run(void) {
     gettimeofday(&last_tick, NULL);
     char buf[256];
     int running = 1;
+    World game_world;
+    int world_initialized = 0;
     while (running) {
         fd_set readfds;
         FD_ZERO(&readfds);
@@ -54,7 +57,23 @@ int server_run(void) {
             ssize_t n = recv(client, buf, sizeof(buf)-1, 0);
             if (n > 0) {
                 buf[n] = '\0';
-                if (buf[0] == MSG_DIR && n >= 2) {
+                if (buf[0] == MSG_WORLD_SIZE && n >= 3) {
+                    size_t x = (unsigned char)buf[1];
+                    size_t y = (unsigned char)buf[2];
+                    if (world_create(&game_world, x, y) == 0) {
+                        world_initialized = 1;
+                        printf("World created: %zux%zu\n", x, y);
+                        // Print the world grid
+                        for (size_t row = 0; row < y; ++row) {
+                            for (size_t col = 0; col < x; ++col) {
+                                putchar(game_world.grid[row * x + col]);
+                            }
+                            putchar('\n');
+                        }
+                    } else {
+                        printf("World creation failed\n");
+                    }
+                } else if (buf[0] == MSG_DIR && n >= 2) {
                     last_dir = buf[1];
                 } else if (strncmp(buf, MSG_QUIT, 4) == 0) {
                     running = 0;
@@ -67,12 +86,21 @@ int server_run(void) {
         }
         gettimeofday(&now, NULL);
         if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
-            char msg[16];
-            snprintf(msg, sizeof(msg), "%s%c\n", MSG_LAST_ARROW, last_dir);
-            send(client, msg, strlen(msg), 0);
+            if (world_initialized) {
+                size_t bufsize = game_world.w * game_world.h + game_world.h + 1;
+                char *worldbuf = malloc(bufsize + 64); // extra for direction
+                if (worldbuf) {
+                    world_serialize(&game_world, worldbuf);
+                    size_t worldlen = strlen(worldbuf);
+                    snprintf(worldbuf + worldlen, 64, "%s%c\n", MSG_LAST_ARROW, last_dir);
+                    send(client, worldbuf, strlen(worldbuf), 0);
+                    free(worldbuf);
+                }
+            }
             last_tick = now;
         }
     }
+    if (world_initialized) world_destroy(&game_world);
 
     close(client);
     close(srv);
