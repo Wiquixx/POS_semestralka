@@ -14,13 +14,16 @@ void *input_thread_func(void *arg) {
     int sockfd = args->sockfd;
     volatile int *running = args->running;
     volatile int *paused = args->paused;
-    MenuState *menu_state = args->menu_state;
     GameState *game_state = args->game_state;
+    pthread_mutex_t *game_state_mutex = args->game_state_mutex;
     input_init();
     while (*running) {
         if (*paused) {
             send(sockfd, MSG_PAUSE, strlen(MSG_PAUSE), 0);
-            int action = menu_show_pause(game_state->time, game_state->score);
+            int action;
+            pthread_mutex_lock(game_state_mutex);
+            action = menu_show_pause(game_state->time, game_state->score);
+            pthread_mutex_unlock(game_state_mutex);
             if (action == 1) {
                 send(sockfd, MSG_RESUME, strlen(MSG_RESUME), 0);
                 *paused = 0;
@@ -43,7 +46,7 @@ void *input_thread_func(void *arg) {
                 case 'a': case 'A':
                 case 's': case 'S':
                 case 'd': case 'D': {
-                    char msg[3] = {MSG_DIR, (unsigned char)(ch >= 'a' ? ch - 32 : ch), '\0'}; // Uppercase
+                    char msg[3] = {MSG_DIR, (char)(ch >= 'a' ? ch - 32 : ch), '\0'}; // Uppercase, cast to char
                     send(sockfd, msg, 2, 0);
                     break;
                 }
@@ -63,11 +66,14 @@ void *receiver_thread_func(void *arg) {
     volatile int *paused = args->paused;
     MenuState *menu_state = args->menu_state;
     GameState *game_state = args->game_state;
+    pthread_mutex_t *game_state_mutex = args->game_state_mutex;
+    pthread_mutex_t *menu_state_mutex = args->menu_state_mutex;
     char buf[2048];
-    char last_dir[64] = "D (RIGHT)";
     while (*running) {
         if (*paused) {
+            pthread_mutex_lock(game_state_mutex);
             menu_show_pause(game_state->time, game_state->score);
+            pthread_mutex_unlock(game_state_mutex);
             sleep(1);
             continue;
         }
@@ -84,7 +90,9 @@ void *receiver_thread_func(void *arg) {
                 char *endptr;
                 unsigned long val = strtoul(score_start, &endptr, 10);
                 if (endptr != score_start && val <= UINT_MAX) {
+                    pthread_mutex_lock(game_state_mutex);
                     game_state->score = (unsigned int)val;
+                    pthread_mutex_unlock(game_state_mutex);
                 }
             }
             char *time_line = strstr(buf, "TIME:");
@@ -93,44 +101,41 @@ void *receiver_thread_func(void *arg) {
                 char *endptr;
                 unsigned long val = strtoul(time_start, &endptr, 10);
                 if (endptr != time_start && val <= UINT_MAX) {
+                    pthread_mutex_lock(game_state_mutex);
                     game_state->time = (unsigned int)val;
+                    pthread_mutex_unlock(game_state_mutex);
                 }
             }
-            // Strip SCORE and TIME lines from world display
+            // Strip SCORE and TIMElines from world display
             char *score_line_strip = strstr(buf, "SCORE:");
-            char *time_line_strip = strstr(buf, "TIME:");
-            // Remove SCORE and TIME lines by replacing them with empty lines
             if (score_line_strip) {
                 char *end = strchr(score_line_strip, '\n');
                 if (end) memmove(score_line_strip, end + 1, strlen(end + 1) + 1);
             }
-            time_line_strip = strstr(buf, "TIME:"); // re-search in case buffer changed
+            char *time_line_strip = strstr(buf, "TIME:"); // re-search in case buffer changed
             if (time_line_strip) {
                 char *end = strchr(time_line_strip, '\n');
                 if (end) memmove(time_line_strip, end + 1, strlen(end + 1) + 1);
             }
             // Clear terminal
-            printf("\033[2J\033[H");
+            system("clear");
             printf("%s", buf); // world (without SCORE/TIME)
-            // Parse direction
-            char dir = last_arrow[strlen(MSG_LAST_ARROW)];
-            const char *dir_str = "?";
-            switch (dir) {
-                case DIR_UP: dir_str = "W (UP)"; break;
-                case DIR_DOWN: dir_str = "S (DOWN)"; break;
-                case DIR_LEFT: dir_str = "A (LEFT)"; break;
-                case DIR_RIGHT: dir_str = "D (RIGHT)"; break;
-                default: dir_str = "?"; break;
-            }
-            snprintf(last_dir, sizeof(last_dir), "%s", dir_str);
+            pthread_mutex_lock(game_state_mutex);
             printf("Current score: %u\n", game_state->score);
             // Print time in min:sec format
             printf("Time: %u:%02u\n", game_state->time / 60, game_state->time % 60);
+            pthread_mutex_unlock(game_state_mutex);
             fflush(stdout);
         }
         if (strstr(buf, "quit") || strstr(buf, "MENU")) {
+            pthread_mutex_lock(game_state_mutex);
             printf("Game ended. \nFinal score: %u\n", game_state->score);
-            int start_time = menu_state->time;
+            pthread_mutex_unlock(game_state_mutex);
+            int start_time;
+            pthread_mutex_lock(menu_state_mutex);
+            start_time = menu_state->time;
+            pthread_mutex_unlock(menu_state_mutex);
+            pthread_mutex_lock(game_state_mutex);
             if (start_time > 0) {
                 int time_spent;
                 if (game_state->time == 1) {
@@ -146,6 +151,7 @@ void *receiver_thread_func(void *arg) {
             } else {
                 printf("Time spent: %u:%02u\n", game_state->time / 60, game_state->time % 60);
             }
+            pthread_mutex_unlock(game_state_mutex);
             printf("Press any button to return to menu...\n");
             *running = 0;
             break;

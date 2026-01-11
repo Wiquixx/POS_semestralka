@@ -38,12 +38,12 @@ static int connect_server_simple(const char *host, int port) {
 // Remove global variables, pass mode and obstacles as arguments
 int client_run(int mode, int obstacles, MenuState *menu_state) {
     unsigned int highscore = 0;
-    printf("Commands: use WASD; p to pause.\n");
-    printf("Current highscore: %u\n", highscore);
+    //printf("Commands: use WASD; p to pause.\n");
+    //printf("Current highscore: %u\n", highscore);
 
     int attempts = 5;
     for (int i = 0; i < attempts; ++i) {
-        printf("Pripajam\n");
+        //printf("Pripajam\n");
         sockfd = connect_server_simple("127.0.0.1", PROTO_PORT);
         if (sockfd >= 0) break;
         sleep(1);
@@ -82,13 +82,18 @@ int client_run(int mode, int obstacles, MenuState *menu_state) {
     running = 1;
     paused = 0;
     GameState game_state = {0};
+    pthread_mutex_t game_state_mutex, menu_state_mutex;
+    pthread_mutex_init(&game_state_mutex, NULL);
+    pthread_mutex_init(&menu_state_mutex, NULL);
     pthread_t input_thread, recv_thread;
-    InputThreadArgs input_args = { sockfd, &running, &paused, menu_state, &game_state };
-    ReceiverThreadArgs recv_args = { sockfd, &running, &paused, menu_state, &game_state };
+    InputThreadArgs input_args = { sockfd, &running, &paused, menu_state, &game_state, &game_state_mutex, &menu_state_mutex };
+    ReceiverThreadArgs recv_args = { sockfd, &running, &paused, menu_state, &game_state, &game_state_mutex, &menu_state_mutex };
     pthread_create(&input_thread, NULL, input_thread_func, &input_args);
     pthread_create(&recv_thread, NULL, receiver_thread_func, &recv_args);
     pthread_join(input_thread, NULL);
     pthread_join(recv_thread, NULL);
+    pthread_mutex_destroy(&game_state_mutex);
+    pthread_mutex_destroy(&menu_state_mutex);
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
 
@@ -107,7 +112,7 @@ int main(void) {
             continue; // restart menu on invalid X/Y input
         }
         // Start server as subprocess
-        printf("Starting server...\n");
+        //printf("Starting server...\n");
         pid_t pid = fork();
         if (pid == 0) {
             // Child: exec server
@@ -120,7 +125,9 @@ int main(void) {
         }
         // Parent: wait a bit for server to start
         sleep(2); // Increased wait time
+        system("clear");
         int result = client_run(mode, (obstacles == 1) ? 1 : 0, &menu_state);
+        system("clear");
         if (result != 0) {
             fprintf(stderr, "Client failed to connect or run.\n");
         }

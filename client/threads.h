@@ -16,6 +16,8 @@ typedef struct {
     volatile int *paused; // Add paused flag
     MenuState *menu_state;
     GameState *game_state;
+    pthread_mutex_t *game_state_mutex;
+    pthread_mutex_t *menu_state_mutex;
 } InputThreadArgs;
 
 void *input_thread_func(void *arg);
@@ -27,6 +29,8 @@ typedef struct {
     volatile int *paused; // Add paused flag
     MenuState *menu_state;
     GameState *game_state;
+    pthread_mutex_t *game_state_mutex;
+    pthread_mutex_t *menu_state_mutex;
 } ReceiverThreadArgs;
 
 void *receiver_thread_func(void *arg);

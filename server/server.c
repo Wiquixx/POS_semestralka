@@ -78,7 +78,7 @@ int server_run(void) {
                         world_initialized = 1;
                         logic_draw_initial(&game_world);
                         game_world.time = initial_time;
-                        printf("World created: %zux%zu%s\n", x, y, obstacles ? " with obstacles" : "");
+                        //printf("World created: %zux%zu%s\n", x, y, obstacles ? " with obstacles" : "");
                         // Print the world grid
                         for (size_t row = 0; row < y; ++row) {
                             for (size_t col = 0; col < x; ++col) {
