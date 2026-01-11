@@ -42,14 +42,12 @@ static int connect_server_simple(const char *host, int port) {
 
 int client_init(Client *c) {
     (void)c; // no special init required here
-    render_init();
     return 0;
 }
 
 int client_run(Client *c) {
     (void)c;
     unsigned int highscore = 0;
-    persistence_load_highscore("highscore.txt", &highscore);
 
     printf("Simple client\n");
     printf("Commands: use WASD; q to quit.\n");
@@ -105,12 +103,12 @@ int client_run(Client *c) {
     shutdown(sockfd, SHUT_RDWR);
     close(sockfd);
 
-    render_shutdown();
     return 0;
 }
 
 void client_destroy(Client *c) {
-    (void)c; render_shutdown(); }
+    (void)c; // no special cleanup required here
+}
 
 int main(void) {
     int mode, obstacles;

@@ -1,8 +1,6 @@
 set(CLIENT_SOURCES
     client.c
     input.c
-    persistence.c
-    render.c
     threads.c
     menu.c
 )
