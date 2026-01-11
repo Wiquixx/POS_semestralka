@@ -7,6 +7,7 @@
 typedef struct {
     int sockfd;
     volatile int *running;
+    volatile int *paused; // Add paused flag
 } InputThreadArgs;
 
 void *input_thread_func(void *arg);
@@ -15,6 +16,7 @@ void *input_thread_func(void *arg);
 typedef struct {
     int sockfd;
     volatile int *running;
+    volatile int *paused; // Add paused flag
 } ReceiverThreadArgs;
 
 void *receiver_thread_func(void *arg);

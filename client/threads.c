@@ -1,6 +1,7 @@
 #include "threads.h"
 #include "input.h"
 #include "protocol.h"
+#include "menu.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -10,18 +11,42 @@ void *input_thread_func(void *arg) {
     InputThreadArgs *args = (InputThreadArgs *)arg;
     int sockfd = args->sockfd;
     volatile int *running = args->running;
+    volatile int *paused = args->paused;
     input_init();
     while (*running) {
-        int dir = input_read_wasd();
-        if (dir) {
-            char msg[3] = {MSG_DIR, (char)dir, '\0'};
-            send(sockfd, msg, 2, 0);
-        } else {
-            char ch;
-            if (read(STDIN_FILENO, &ch, 1) == 1 && ch == 'q') {
+        if (*paused) {
+            // Notify server of pause
+            send(sockfd, MSG_PAUSE, strlen(MSG_PAUSE), 0);
+            int action = menu_show_pause();
+            if (action == 1) {
+                // Notify server of resume
+                send(sockfd, MSG_RESUME, strlen(MSG_RESUME), 0);
+                *paused = 0; // Resume
+            } else if (action == 2) {
                 send(sockfd, "quit", 4, 0);
                 *running = 0;
                 break;
+            }
+            continue;
+        }
+        char ch;
+        if (read(STDIN_FILENO, &ch, 1) == 1) {
+            if (ch == 'p' || ch == 'P') {
+                *paused = 1;
+                continue;
+            }
+            // WASD movement
+            switch (ch) {
+                case 'w': case 'W':
+                case 'a': case 'A':
+                case 's': case 'S':
+                case 'd': case 'D': {
+                    char msg[3] = {MSG_DIR, ch >= 'a' ? ch - 32 : ch, '\0'}; // Uppercase
+                    send(sockfd, msg, 2, 0);
+                    break;
+                }
+                default:
+                    break;
             }
         }
     }
@@ -33,13 +58,19 @@ void *receiver_thread_func(void *arg) {
     ReceiverThreadArgs *args = (ReceiverThreadArgs *)arg;
     int sockfd = args->sockfd;
     volatile int *running = args->running;
+    volatile int *paused = args->paused;
     char buf[2048];
     char last_dir[64] = "D (RIGHT)";
     unsigned int last_score = 0;
     while (*running) {
+        if (*paused) {
+            usleep(100000); // Sleep 100ms while paused
+            continue;
+        }
         ssize_t r = recv(sockfd, buf, sizeof(buf)-1, 0);
         if (r <= 0) break;
         buf[r] = '\0';
+        if (*paused) continue; // Double-check pause before printing
         // Debug: print the whole message received from the server
         //fprintf(stderr, "[DEBUG] Received message:\n%s\n", buf);
         // Find last direction marker

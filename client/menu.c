@@ -5,6 +5,8 @@
 #include <windows.h>
 #endif
 #include "menu.h"
+#include <termios.h>
+#include <unistd.h>
 
 static void clear_terminal(void);
 
@@ -103,3 +105,30 @@ int menu_get_x(void) { return menu_x; }
 int menu_get_y(void) { return menu_y; }
 int menu_get_obstacles(void) { return menu_obstacles; }
 int menu_get_time(void) { return menu_time; }
+
+// Shows the pause menu, returns 1 for resume, 2 for back to menu
+int menu_show_pause(void) {
+    // Save current terminal settings
+    struct termios orig, temp;
+    tcgetattr(STDIN_FILENO, &orig);
+    temp = orig;
+    temp.c_lflag |= (ICANON | ECHO); // Enable canonical mode and echo
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &temp);
+    int result = 2;
+    while (1) {
+        clear_terminal();
+        printf("PAUSE MENU\n");
+        printf("Resume (1)\n");
+        printf("Back to Menu (2)\n");
+        printf("> ");
+        fflush(stdout);
+        char choice[16];
+        if (!fgets(choice, sizeof(choice), stdin)) break;
+        choice[strcspn(choice, "\n")] = '\0';
+        if (strcmp(choice, "1") == 0) { result = 1; break; }
+        if (strcmp(choice, "2") == 0) { result = 2; break; }
+    }
+    // Restore previous terminal settings (raw mode)
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
+    return result;
+}

@@ -1,6 +1,5 @@
 #include "client.h"
-#include "persistence.h"
-#include "render.h"
+
 #include "protocol.h"
 #include "input.h"
 #include "threads.h"
@@ -23,6 +22,7 @@
 struct Client { int sock; };
 
 static volatile int running = 0;
+static volatile int paused = 0;
 static int sockfd = -1;
 
 static int connect_server_simple(const char *host, int port) {
@@ -93,9 +93,10 @@ int client_run(Client *c) {
     }
 
     running = 1;
+    paused = 0;
     pthread_t input_thread, recv_thread;
-    InputThreadArgs input_args = { sockfd, &running };
-    ReceiverThreadArgs recv_args = { sockfd, &running };
+    InputThreadArgs input_args = { sockfd, &running, &paused };
+    ReceiverThreadArgs recv_args = { sockfd, &running, &paused };
     pthread_create(&input_thread, NULL, input_thread_func, &input_args);
     pthread_create(&recv_thread, NULL, receiver_thread_func, &recv_args);
     pthread_join(input_thread, NULL);

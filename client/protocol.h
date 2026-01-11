@@ -17,6 +17,8 @@ typedef struct {
 #define MSG_DIR 'D' // followed by one byte: U/D/L/R
 #define MSG_QUIT "quit"
 #define MSG_WORLD_SIZE 'W' // followed by two bytes: X, Y
+#define MSG_PAUSE "PAUSE"
+#define MSG_RESUME "RESUME"
 
 // Movement directions for WASD
 #define DIR_UP    'W'

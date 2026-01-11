@@ -51,6 +51,7 @@ int server_run(void) {
     int world_initialized = 0;
     int time_mode = 0;
     int initial_time = 0;
+    int paused = 0;
     while (running) {
         fd_set readfds;
         FD_ZERO(&readfds);
@@ -93,6 +94,10 @@ int server_run(void) {
                 } else if (strncmp(buf, MSG_QUIT, 4) == 0) {
                     running = 0;
                     break;
+                } else if (strncmp(buf, MSG_PAUSE, strlen(MSG_PAUSE)) == 0) {
+                    paused = 1;
+                } else if (strncmp(buf, MSG_RESUME, strlen(MSG_RESUME)) == 0) {
+                    paused = 0;
                 }
             } else if (n == 0) {
                 running = 0;
@@ -100,7 +105,7 @@ int server_run(void) {
             }
         }
         gettimeofday(&now, NULL);
-        if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
+        if (!paused && ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000))) {
             if (world_initialized) {
                 logic_apply_input(&game_world, last_dir);
                 if (time_mode) {
