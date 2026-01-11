@@ -36,20 +36,20 @@ static int ask_time(void) {
 
 // Helper for X/Y input, returns -1 on invalid input
 static int ask_xy(void) {
-    printf("Enter X size (5-20): ");
+    printf("Enter X size (10-20): ");
     fflush(stdout);
     char bufx[16];
     if (!fgets(bufx, sizeof(bufx), stdin)) return -1;
     char *endptrx;
     long x = strtol(bufx, &endptrx, 10);
-    if (endptrx == bufx || (*endptrx != '\0' && *endptrx != '\n') || x < 5 || x > 20) return -1;
-    printf("Enter Y size (5-20): ");
+    if (endptrx == bufx || (*endptrx != '\0' && *endptrx != '\n') || x < 10 || x > 20) return -1;
+    printf("Enter Y size (10-20): ");
     fflush(stdout);
     char bufy[16];
     if (!fgets(bufy, sizeof(bufy), stdin)) return -1;
     char *endptry;
     long y = strtol(bufy, &endptry, 10);
-    if (endptry == bufy || (*endptry != '\0' && *endptry != '\n') || y < 5 || y > 20) return -1;
+    if (endptry == bufy || (*endptry != '\0' && *endptry != '\n') || y < 10 || y > 20) return -1;
     menu_x = (int)x;
     menu_y = (int)y;
     return 0;

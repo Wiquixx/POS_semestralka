@@ -81,5 +81,7 @@ void world_serialize(const World *w, char *buf) {
         }
         buf[idx++] = '\n';
     }
+    // Append score as a line
+    idx += sprintf(buf + idx, "SCORE:%u\n", w->score);
     buf[idx] = '\0';
 }

@@ -35,6 +35,7 @@ void *receiver_thread_func(void *arg) {
     volatile int *running = args->running;
     char buf[2048];
     char last_dir[64] = "D (RIGHT)";
+    unsigned int last_score = 0;
     while (*running) {
         ssize_t r = recv(sockfd, buf, sizeof(buf)-1, 0);
         if (r <= 0) break;
@@ -43,6 +44,14 @@ void *receiver_thread_func(void *arg) {
         char *last_arrow = strstr(buf, MSG_LAST_ARROW);
         if (last_arrow) {
             *last_arrow = '\0';
+            // Find score line
+            char *score_line = strstr(buf, "SCORE:");
+            unsigned int score = 0;
+            if (score_line) {
+                sscanf(score_line, "SCORE:%u", &score);
+                last_score = score;
+                *score_line = '\0'; // Remove score from world print
+            }
             // Clear terminal
 #ifdef _WIN32
             system("cls");
@@ -61,10 +70,12 @@ void *receiver_thread_func(void *arg) {
             }
             snprintf(last_dir, sizeof(last_dir), "%s", dir_str);
             printf("Last direction: %s\n", last_dir);
+            printf("Current score: %u\n", score);
             fflush(stdout);
         }
         if (strstr(buf, "quit") || strstr(buf, "MENU")) {
-            printf("Game ended. Press any button to return to menu...\n");
+            printf("Game ended. Final score: %u\n", last_score);
+            printf("Press any button to return to menu...\n");
             *running = 0;
             break;
         }

@@ -86,6 +86,7 @@ void logic_apply_input(World *w, char input) {
             snake->x[snake->size-1] = prev_tail_x;
             snake->y[snake->size-1] = prev_tail_y;
         }
+        w->score += 1; // Increment score
         place_food(w, snake);
     }
     w->grid[w->food_y * w->w + w->food_x] = 'o';
