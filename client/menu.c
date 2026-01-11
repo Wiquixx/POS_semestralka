@@ -102,3 +102,5 @@ int menu_show_obstacles(void) {
 int menu_get_x(void) { return menu_x; }
 int menu_get_y(void) { return menu_y; }
 int menu_get_obstacles(void) { return menu_obstacles; }
+
+

@@ -49,6 +49,7 @@ int world_create(World *out, size_t w, size_t h, int obstacles) {
     }
     out->game_over = 0;
     out->score = 0;
+    out->time = 0; // initialize time to 0
     return 0;
 }
 
@@ -62,8 +63,8 @@ void world_destroy(World *w) {
 }
 
 int world_tick(World *w) {
-    // placeholder: do nothing and return success
-    (void)w;
+    if (!w) return -1;
+    w->time += 1; // increment time by 1 each tick
     return 0;
 }
 
@@ -83,5 +84,9 @@ void world_serialize(const World *w, char *buf) {
     }
     // Append score as a line
     idx += sprintf(buf + idx, "SCORE:%u\n", w->score);
+    // Append time as a line
+    idx += sprintf(buf + idx, "TIME:%u\n", w->time);
+    // Debug: print time value being sent
+    fprintf(stderr, "[DEBUG] Server sending time: %u\n", w->time);
     buf[idx] = '\0';
 }

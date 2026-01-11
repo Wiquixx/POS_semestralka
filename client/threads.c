@@ -40,24 +40,27 @@ void *receiver_thread_func(void *arg) {
         ssize_t r = recv(sockfd, buf, sizeof(buf)-1, 0);
         if (r <= 0) break;
         buf[r] = '\0';
+        // Debug: print the whole message received from the server
+        fprintf(stderr, "[DEBUG] Received message:\n%s\n", buf);
         // Find last direction marker
         char *last_arrow = strstr(buf, MSG_LAST_ARROW);
         if (last_arrow) {
             *last_arrow = '\0';
-            // Find score line
+            // Parse score and time without modifying the buffer further
+            unsigned int score = 0, time = 0;
             char *score_line = strstr(buf, "SCORE:");
-            unsigned int score = 0;
             if (score_line) {
                 sscanf(score_line, "SCORE:%u", &score);
                 last_score = score;
-                *score_line = '\0'; // Remove score from world print
+            }
+            char *time_line = strstr(buf, "TIME:");
+            if (time_line) {
+                sscanf(time_line, "TIME:%u", &time);
+                // Debug: print raw time value
+                fprintf(stderr, "[DEBUG] Parsed time: %u\n", time);
             }
             // Clear terminal
-#ifdef _WIN32
-            system("cls");
-#else
             printf("\033[2J\033[H");
-#endif
             printf("%s", buf); // world
             // Parse direction
             char dir = last_arrow[strlen(MSG_LAST_ARROW)];
@@ -69,8 +72,10 @@ void *receiver_thread_func(void *arg) {
                 case DIR_RIGHT: dir_str = "D (RIGHT)"; break;
             }
             snprintf(last_dir, sizeof(last_dir), "%s", dir_str);
-            printf("Last direction: %s\n", last_dir);
+            //printf("Last direction: %s\n", last_dir);
             printf("Current score: %u\n", score);
+            // Print time in min:sec format
+            printf("Time: %u:%02u\n", time / 60, time % 60);
             fflush(stdout);
         }
         if (strstr(buf, "quit") || strstr(buf, "MENU")) {

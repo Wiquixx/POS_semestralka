@@ -93,6 +93,7 @@ int server_run(void) {
         if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
             if (world_initialized) {
                 logic_apply_input(&game_world, last_dir); // move snake forward
+                world_tick(&game_world); // increment time each tick
                 if (game_world.game_over) {
                     send(client, MSG_QUIT, strlen(MSG_QUIT), 0);
                     running = 0;
@@ -119,13 +120,6 @@ int server_run(void) {
     return 0;
 }
 
-void server_shutdown(void) { }
-
-#else
-
-// Non-unix stubs
-int server_init(void) { return 0; }
-int server_run(void) { return 0; }
 void server_shutdown(void) { }
 
 #endif

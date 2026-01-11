@@ -12,6 +12,7 @@ typedef struct World {
     unsigned int score; // placeholder score
     size_t food_x, food_y; // position of food
     int obstacles; // 1 if obstacles are enabled, 0 otherwise
+    unsigned int time; // elapsed time in seconds
 } World;
 
 // create a new world; if obstacles is nonzero, generate obstacles
