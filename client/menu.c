@@ -23,13 +23,13 @@ static void clear_terminal(void) {
 
 // Helper for time input, returns -1 on invalid input
 static int ask_time(void) {
-    printf("How many seconds should the game last? ");
+    printf("Enter time in seconds (10 - 600): ");
     fflush(stdout);
     char buf[32];
     if (!fgets(buf, sizeof(buf), stdin)) return -1;
     char *endptr;
     long t = strtol(buf, &endptr, 10);
-    if (endptr == buf || (*endptr != '\0' && *endptr != '\n') || t <= 0) return -1;
+    if (endptr == buf || (*endptr != '\0' && *endptr != '\n') || t < 10 || t > 600) return -1;
     menu_time = (int)t;
     return 0;
 }
@@ -102,5 +102,4 @@ int menu_show_obstacles(void) {
 int menu_get_x(void) { return menu_x; }
 int menu_get_y(void) { return menu_y; }
 int menu_get_obstacles(void) { return menu_obstacles; }
-
-
+int menu_get_time(void) { return menu_time; }

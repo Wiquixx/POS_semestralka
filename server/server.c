@@ -49,6 +49,8 @@ int server_run(void) {
     int running = 1;
     World game_world;
     int world_initialized = 0;
+    int time_mode = 0;
+    int initial_time = 0;
     while (running) {
         fd_set readfds;
         FD_ZERO(&readfds);
@@ -63,10 +65,18 @@ int server_run(void) {
                     size_t x = (unsigned char)buf[1];
                     size_t y = (unsigned char)buf[2];
                     int obstacles = 0;
-                    if (n >= 4 && buf[3] == 'O') obstacles = 1; // Example: client sends 'O' for obstacles
+                    if (n >= 4 && buf[3] == 'O') obstacles = 1;
+                    if (n == 5) { // time mode
+                        time_mode = 1;
+                        initial_time = (unsigned char)buf[4];
+                    } else {
+                        time_mode = 0;
+                        initial_time = 0;
+                    }
                     if (world_create(&game_world, x, y, obstacles) == 0) {
                         world_initialized = 1;
-                        logic_draw_initial(&game_world); // draw snake on grid
+                        logic_draw_initial(&game_world);
+                        game_world.time = initial_time;
                         printf("World created: %zux%zu%s\n", x, y, obstacles ? " with obstacles" : "");
                         // Print the world grid
                         for (size_t row = 0; row < y; ++row) {
@@ -92,15 +102,22 @@ int server_run(void) {
         gettimeofday(&now, NULL);
         if ((now.tv_sec > last_tick.tv_sec) || (now.tv_sec == last_tick.tv_sec && now.tv_usec - last_tick.tv_usec >= 1000000)) {
             if (world_initialized) {
-                logic_apply_input(&game_world, last_dir); // move snake forward
-                world_tick(&game_world); // increment time each tick
+                logic_apply_input(&game_world, last_dir);
+                if (time_mode) {
+                    game_world.time -= 1;
+                    if (game_world.time == 0) {
+                        game_world.game_over = 1;
+                    }
+                } else {
+                    world_tick(&game_world);
+                }
                 if (game_world.game_over) {
                     send(client, MSG_QUIT, strlen(MSG_QUIT), 0);
                     running = 0;
                     break;
                 }
                 size_t bufsize = game_world.w * game_world.h + game_world.h + 1;
-                char *worldbuf = malloc(bufsize + 64); // extra for direction
+                char *worldbuf = malloc(bufsize + 64);
                 if (worldbuf) {
                     world_serialize(&game_world, worldbuf);
                     size_t worldlen = strlen(worldbuf);

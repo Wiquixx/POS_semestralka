@@ -69,7 +69,15 @@ int client_run(Client *c) {
 
     // Send world size if needed (mode and obstacles must be passed in or made global)
     extern int g_mode, g_obstacles;
-    if (g_mode == 2 || g_mode == 1) {
+    if (g_mode == 2) {
+        unsigned char msg[5];
+        msg[0] = MSG_WORLD_SIZE;
+        msg[1] = (unsigned char)menu_get_x();
+        msg[2] = (unsigned char)menu_get_y();
+        msg[3] = (g_obstacles == 1) ? 'O' : 'N';
+        msg[4] = (unsigned char)menu_get_time();
+        send(sockfd, msg, 5, 0);
+    } else if (g_mode == 1) {
         if (g_obstacles == 1) {
             unsigned char msg[4];
             msg[0] = MSG_WORLD_SIZE;
