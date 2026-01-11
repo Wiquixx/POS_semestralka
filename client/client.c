@@ -37,7 +37,6 @@ static int connect_server_simple(const char *host, int port) {
 
 // Remove global variables, pass mode and obstacles as arguments
 int client_run(int mode, int obstacles, MenuState *menu_state) {
-    unsigned int highscore = 0;
     //printf("Commands: use WASD; p to pause.\n");
     //printf("Current highscore: %u\n", highscore);
 
