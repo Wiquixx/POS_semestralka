@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-int server_init(void) { return 0; }
+
 
 // Simple blocking server: accept one client and send a welcome message.
 int server_run(void) {
@@ -142,14 +142,12 @@ int server_run(void) {
     return 0;
 }
 
-void server_shutdown(void) { }
+
 
 #endif
 
 // Single main() for all platforms
 int main(void) {
-    if (server_init() != 0) return 1;
     server_run();
-    server_shutdown();
     return 0;
 }
