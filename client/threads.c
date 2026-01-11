@@ -64,7 +64,7 @@ void *receiver_thread_func(void *arg) {
     unsigned int last_score = 0;
     while (*running) {
         if (*paused) {
-            usleep(100000); // Sleep 100ms while paused
+            sleep(1); // Sleep 100ms while paused
             continue;
         }
         ssize_t r = recv(sockfd, buf, sizeof(buf)-1, 0);
