@@ -60,6 +60,22 @@ void logic_apply_input(World *w, char input) {
     if (next_dir != DIR_NONE && !is_reverse(snake->dir, next_dir)) {
         snake->dir = next_dir;
     }
+    // Calculate next head position
+    size_t next_x = snake->x[0];
+    size_t next_y = snake->y[0];
+    switch (snake->dir) {
+        case DIR_UP:    next_y = (next_y == 0) ? w->h - 1 : next_y - 1; break;
+        case DIR_DOWN:  next_y = (next_y + 1 == w->h) ? 0 : next_y + 1; break;
+        case DIR_LEFT:  next_x = (next_x == 0) ? w->w - 1 : next_x - 1; break;
+        case DIR_RIGHT: next_x = (next_x + 1 == w->w) ? 0 : next_x + 1; break;
+        default: break;
+    }
+    // Check obstacle collision BEFORE moving snake
+    if (w->grid[next_y * w->w + next_x] == 'X') {
+        w->game_over = 1;
+        logic_cleanup();
+        return;
+    }
     // Move snake
     size_t prev_tail_x = snake->x[snake->size-1];
     size_t prev_tail_y = snake->y[snake->size-1];
@@ -71,12 +87,6 @@ void logic_apply_input(World *w, char input) {
             logic_cleanup();
             return; // End function, no further actions
         }
-    }
-    // Check obstacle collision
-    if (w->grid[snake->y[0] * w->w + snake->x[0]] == 'X') {
-        w->game_over = 1;
-        logic_cleanup();
-        return;
     }
     // Check food collision
     if (snake->x[0] == w->food_x && snake->y[0] == w->food_y) {

@@ -57,7 +57,7 @@ void *receiver_thread_func(void *arg) {
             if (time_line) {
                 sscanf(time_line, "TIME:%u", &time);
                 // Debug: print raw time value
-                fprintf(stderr, "[DEBUG] Parsed time: %u\n", time);
+                //fprintf(stderr, "[DEBUG] Parsed time: %u\n", time);
             }
             // Clear terminal
             printf("\033[2J\033[H");
