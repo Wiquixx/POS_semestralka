@@ -15,11 +15,6 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <pthread.h>
-#include <signal.h>
-#include <sys/select.h>
-#include <time.h>
-
-struct Client { int sock; };
 
 static volatile int running = 0;
 static volatile int paused = 0;
@@ -40,22 +35,15 @@ static int connect_server_simple(const char *host, int port) {
     return fd;
 }
 
-int client_init(Client *c) {
-    (void)c; // no special init required here
-    return 0;
-}
-
-int client_run(Client *c) {
-    (void)c;
+// Remove global variables, pass mode and obstacles as arguments
+int client_run(int mode, int obstacles) {
     unsigned int highscore = 0;
-
-    //printf("Simple client\n");
     printf("Commands: use WASD; p to pause.\n");
     printf("Current highscore: %u\n", highscore);
 
-    // try to connect to server
     int attempts = 5;
     for (int i = 0; i < attempts; ++i) {
+        printf("Pripajam\n");
         sockfd = connect_server_simple("127.0.0.1", PROTO_PORT);
         if (sockfd >= 0) break;
         sleep(1);
@@ -65,18 +53,17 @@ int client_run(Client *c) {
         return -1;
     }
 
-    // Send world size if needed (mode and obstacles must be passed in or made global)
-    extern int g_mode, g_obstacles;
-    if (g_mode == 2) {
+    // Send world size if needed
+    if (mode == 2) {
         unsigned char msg[5];
         msg[0] = MSG_WORLD_SIZE;
         msg[1] = (unsigned char)menu_get_x();
         msg[2] = (unsigned char)menu_get_y();
-        msg[3] = (g_obstacles == 1) ? 'O' : 'N';
+        msg[3] = (obstacles == 1) ? 'O' : 'N';
         msg[4] = (unsigned char)menu_get_time();
         send(sockfd, msg, 5, 0);
-    } else if (g_mode == 1) {
-        if (g_obstacles == 1) {
+    } else if (mode == 1) {
+        if (obstacles == 1) {
             unsigned char msg[4];
             msg[0] = MSG_WORLD_SIZE;
             msg[1] = (unsigned char)menu_get_x();
@@ -107,22 +94,18 @@ int client_run(Client *c) {
     return 0;
 }
 
-void client_destroy(Client *c) {
-    (void)c; // no special cleanup required here
-}
-
 int main(void) {
-    int mode, obstacles;
     while (1) {
-        mode = menu_show_main();
+        int mode = menu_show_main();
         if (mode == 3) {
             return 0;
         }
-        obstacles = menu_show_obstacles();
+        int obstacles = menu_show_obstacles();
         if (obstacles == -1) {
             continue; // restart menu on invalid X/Y input
         }
         // Start server as subprocess
+        printf("Starting server...\n");
         pid_t pid = fork();
         if (pid == 0) {
             // Child: exec server
@@ -134,22 +117,13 @@ int main(void) {
             return 1;
         }
         // Parent: wait a bit for server to start
-        sleep(1);
-        // Now run client logic
-        Client c;
-        // Set globals for mode/obstacles
-        extern int g_mode, g_obstacles;
-        g_mode = mode;
-        g_obstacles = obstacles;
-        if (client_init(&c) != 0) return 1;
-        client_run(&c);
-        client_destroy(&c);
-        continue; // Show menu again after game ends
+        sleep(2); // Increased wait time
+        int result = client_run(mode, (obstacles == 1) ? 1 : 0);
+        if (result != 0) {
+            fprintf(stderr, "Client failed to connect or run.\n");
+        }
     }
 }
 
 #endif
 
-// Add global variables for mode and obstacles
-int g_mode = 0;
-int g_obstacles = 0;

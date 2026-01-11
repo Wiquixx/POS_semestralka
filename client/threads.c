@@ -126,12 +126,18 @@ void *receiver_thread_func(void *arg) {
             fflush(stdout);
         }
         if (strstr(buf, "quit") || strstr(buf, "MENU")) {
-            printf("Game ended. Final score: %u\n", last_score);
+            printf("Game ended. \nFinal score: %u\n", last_score);
             // Print time spent in game
             int start_time = menu_get_time();
             if (start_time > 0) {
-                // Time variant: print starting time and time left
-                int time_spent = start_time - last_time;
+                int time_spent;
+                // If only 1 second left, treat as timeout
+                if (last_time == 1) {
+                    time_spent = start_time;
+                    last_time = 0;
+                } else {
+                    time_spent = start_time - last_time;
+                }
                 printf("Time spent: %d:%02d (Start: %d:%02d, Left: %d:%02d)\n",
                     time_spent / 60, time_spent % 60,
                     start_time / 60, start_time % 60,

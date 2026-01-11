@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include "menu.h"
 #include <termios.h>
 #include <unistd.h>
@@ -16,11 +13,7 @@ static int menu_y = 0;
 static int menu_obstacles = 0;
 
 static void clear_terminal(void) {
-#ifdef _WIN32
-    system("cls");
-#else
-    printf("\033[2J\033[H");
-#endif
+    system("clear");
 }
 
 // Helper for time input, returns -1 on invalid input

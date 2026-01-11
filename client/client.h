@@ -6,14 +6,10 @@
 
 typedef struct Client Client;
 
-// Initialize client (allocate resources if needed)
-int client_init(Client *c);
-
 // Run main client loop (menu, rendering, input)
-int client_run(Client *c);
+int client_run();
 
-// Clean up
-void client_destroy(Client *c);
+
 
 #endif // CLIENT_CLIENT_H
 

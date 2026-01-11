@@ -6,7 +6,6 @@
 
 static struct termios orig_termios;
 
-// Very simple, portable input helper for students.
 // It reads a whole line (up to bufsize-1 chars) using fgets and returns
 // the number of characters (excluding the terminating NUL). On error it
 // returns -1.
@@ -24,25 +23,4 @@ void input_restore(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-// Internal helper: read a whole line (up to bufsize-1 chars)
-static int input_read(char *buf, int bufsize) {
-    if (!buf || bufsize <= 0) return -1;
-    if (!fgets(buf, bufsize, stdin)) return -1;
-    // remove trailing newline if present
-    size_t n = strcspn(buf, "\n");
-    buf[n] = '\0';
-    return (int)n;
-}
 
-// Internal helper: read WASD keys (kept static because not part of public API)
-static int input_read_wasd(void) {
-    char ch;
-    if (read(STDIN_FILENO, &ch, 1) != 1) return 0;
-    switch (ch) {
-        case 'w': case 'W': return 'W';
-        case 'a': case 'A': return 'A';
-        case 's': case 'S': return 'S';
-        case 'd': case 'D': return 'D';
-        default: return 0;
-    }
-}
