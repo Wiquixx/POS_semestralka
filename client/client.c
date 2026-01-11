@@ -36,7 +36,7 @@ static int connect_server_simple(const char *host, int port) {
 }
 
 // Remove global variables, pass mode and obstacles as arguments
-int client_run(int mode, int obstacles) {
+int client_run(int mode, int obstacles, MenuState *menu_state) {
     unsigned int highscore = 0;
     printf("Commands: use WASD; p to pause.\n");
     printf("Current highscore: %u\n", highscore);
@@ -57,33 +57,34 @@ int client_run(int mode, int obstacles) {
     if (mode == 2) {
         unsigned char msg[5];
         msg[0] = MSG_WORLD_SIZE;
-        msg[1] = (unsigned char)menu_get_x();
-        msg[2] = (unsigned char)menu_get_y();
+        msg[1] = (unsigned char)menu_state->x;
+        msg[2] = (unsigned char)menu_state->y;
         msg[3] = (obstacles == 1) ? 'O' : 'N';
-        msg[4] = (unsigned char)menu_get_time();
+        msg[4] = (unsigned char)menu_state->time;
         send(sockfd, msg, 5, 0);
     } else if (mode == 1) {
         if (obstacles == 1) {
             unsigned char msg[4];
             msg[0] = MSG_WORLD_SIZE;
-            msg[1] = (unsigned char)menu_get_x();
-            msg[2] = (unsigned char)menu_get_y();
+            msg[1] = (unsigned char)menu_state->x;
+            msg[2] = (unsigned char)menu_state->y;
             msg[3] = 'O';
             send(sockfd, msg, 4, 0);
         } else {
             unsigned char msg[3];
             msg[0] = MSG_WORLD_SIZE;
-            msg[1] = (unsigned char)menu_get_x();
-            msg[2] = (unsigned char)menu_get_y();
+            msg[1] = (unsigned char)menu_state->x;
+            msg[2] = (unsigned char)menu_state->y;
             send(sockfd, msg, 3, 0);
         }
     }
 
     running = 1;
     paused = 0;
+    GameState game_state = {0};
     pthread_t input_thread, recv_thread;
-    InputThreadArgs input_args = { sockfd, &running, &paused };
-    ReceiverThreadArgs recv_args = { sockfd, &running, &paused };
+    InputThreadArgs input_args = { sockfd, &running, &paused, menu_state, &game_state };
+    ReceiverThreadArgs recv_args = { sockfd, &running, &paused, menu_state, &game_state };
     pthread_create(&input_thread, NULL, input_thread_func, &input_args);
     pthread_create(&recv_thread, NULL, receiver_thread_func, &recv_args);
     pthread_join(input_thread, NULL);
@@ -95,12 +96,13 @@ int client_run(int mode, int obstacles) {
 }
 
 int main(void) {
+    MenuState menu_state = {0 };
     while (1) {
-        int mode = menu_show_main();
+        int mode = menu_show_main(&menu_state);
         if (mode == 3) {
             return 0;
         }
-        int obstacles = menu_show_obstacles();
+        int obstacles = menu_show_obstacles(&menu_state);
         if (obstacles == -1) {
             continue; // restart menu on invalid X/Y input
         }
@@ -118,7 +120,7 @@ int main(void) {
         }
         // Parent: wait a bit for server to start
         sleep(2); // Increased wait time
-        int result = client_run(mode, (obstacles == 1) ? 1 : 0);
+        int result = client_run(mode, (obstacles == 1) ? 1 : 0, &menu_state);
         if (result != 0) {
             fprintf(stderr, "Client failed to connect or run.\n");
         }

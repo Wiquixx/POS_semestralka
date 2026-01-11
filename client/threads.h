@@ -2,12 +2,20 @@
 #define CLIENT_THREADS_H
 
 #include <pthread.h>
+#include "menu.h"
+
+typedef struct {
+    unsigned int score;
+    unsigned int time;
+} GameState;
 
 // Thread for handling user input and sending to server
 typedef struct {
     int sockfd;
     volatile int *running;
     volatile int *paused; // Add paused flag
+    MenuState *menu_state;
+    GameState *game_state;
 } InputThreadArgs;
 
 void *input_thread_func(void *arg);
@@ -17,6 +25,8 @@ typedef struct {
     int sockfd;
     volatile int *running;
     volatile int *paused; // Add paused flag
+    MenuState *menu_state;
+    GameState *game_state;
 } ReceiverThreadArgs;
 
 void *receiver_thread_func(void *arg);
