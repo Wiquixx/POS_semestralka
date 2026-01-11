@@ -41,7 +41,7 @@ void *receiver_thread_func(void *arg) {
         if (r <= 0) break;
         buf[r] = '\0';
         // Debug: print the whole message received from the server
-        fprintf(stderr, "[DEBUG] Received message:\n%s\n", buf);
+        //fprintf(stderr, "[DEBUG] Received message:\n%s\n", buf);
         // Find last direction marker
         char *last_arrow = strstr(buf, MSG_LAST_ARROW);
         if (last_arrow) {
@@ -59,9 +59,22 @@ void *receiver_thread_func(void *arg) {
                 // Debug: print raw time value
                 //fprintf(stderr, "[DEBUG] Parsed time: %u\n", time);
             }
+            // Strip SCORE and TIME lines from world display
+            char *score_line_strip = strstr(buf, "SCORE:");
+            char *time_line_strip = strstr(buf, "TIME:");
+            // Remove SCORE and TIME lines by replacing them with empty lines
+            if (score_line_strip) {
+                char *end = strchr(score_line_strip, '\n');
+                if (end) memmove(score_line_strip, end + 1, strlen(end + 1) + 1);
+            }
+            time_line_strip = strstr(buf, "TIME:"); // re-search in case buffer changed
+            if (time_line_strip) {
+                char *end = strchr(time_line_strip, '\n');
+                if (end) memmove(time_line_strip, end + 1, strlen(end + 1) + 1);
+            }
             // Clear terminal
             printf("\033[2J\033[H");
-            printf("%s", buf); // world
+            printf("%s", buf); // world (without SCORE/TIME)
             // Parse direction
             char dir = last_arrow[strlen(MSG_LAST_ARROW)];
             const char *dir_str = "?";

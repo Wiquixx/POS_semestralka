@@ -87,6 +87,6 @@ void world_serialize(const World *w, char *buf) {
     // Append time as a line
     idx += sprintf(buf + idx, "TIME:%u\n", w->time);
     // Debug: print time value being sent
-    fprintf(stderr, "[DEBUG] Server sending time: %u\n", w->time);
+    //fprintf(stderr, "[DEBUG] Server sending time: %u\n", w->time);
     buf[idx] = '\0';
 }
