@@ -69,12 +69,21 @@ int client_run(Client *c) {
 
     // Send world size if needed (mode and obstacles must be passed in or made global)
     extern int g_mode, g_obstacles;
-    if (g_mode == 2 || (g_mode == 1 && g_obstacles == 2)) {
-        unsigned char msg[3];
-        msg[0] = MSG_WORLD_SIZE;
-        msg[1] = (unsigned char)menu_get_x();
-        msg[2] = (unsigned char)menu_get_y();
-        send(sockfd, msg, 3, 0);
+    if (g_mode == 2 || g_mode == 1) {
+        if (g_obstacles == 1) {
+            unsigned char msg[4];
+            msg[0] = MSG_WORLD_SIZE;
+            msg[1] = (unsigned char)menu_get_x();
+            msg[2] = (unsigned char)menu_get_y();
+            msg[3] = 'O';
+            send(sockfd, msg, 4, 0);
+        } else {
+            unsigned char msg[3];
+            msg[0] = MSG_WORLD_SIZE;
+            msg[1] = (unsigned char)menu_get_x();
+            msg[2] = (unsigned char)menu_get_y();
+            send(sockfd, msg, 3, 0);
+        }
     }
 
     running = 1;

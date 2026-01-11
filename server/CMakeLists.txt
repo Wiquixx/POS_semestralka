@@ -7,4 +7,4 @@ set(SERVER_SOURCES
 
 add_executable(server ${SERVER_SOURCES})
 target_compile_options(server PRIVATE "-std=c11" "-Wall" "-Wextra" "-Wpedantic")
-
+target_link_libraries(server m)

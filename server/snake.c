@@ -40,23 +40,41 @@ void snake_move(Snake *snake, World *world, char input) {
     if (next_dir != DIR_NONE && !is_reverse(snake->dir, next_dir)) {
         snake->dir = next_dir;
     }
+    // Clear previous snake positions (but not obstacles or fruit)
+    for (size_t i = 0; i < world->w * world->h; ++i) {
+        if (world->grid[i] == 'S' || world->grid[i] == 's') {
+            world->grid[i] = '.';
+        }
+    }
     for (size_t i = snake->size - 1; i > 0; --i) {
         snake->x[i] = snake->x[i-1];
         snake->y[i] = snake->y[i-1];
     }
     size_t x = snake->x[0];
     size_t y = snake->y[0];
-    switch (snake->dir) {
-        case DIR_UP:    y = (y == 0) ? world->h - 1 : y - 1; break;
-        case DIR_DOWN:  y = (y + 1 == world->h) ? 0 : y + 1; break;
-        case DIR_LEFT:  x = (x == 0) ? world->w - 1 : x - 1; break;
-        case DIR_RIGHT: x = (x + 1 == world->w) ? 0 : x + 1; break;
-        default: break;
+    // Wall collision logic
+    if (world->obstacles) {
+        switch (snake->dir) {
+            case DIR_UP:    if (y == 0) { world->game_over = 1; return; } else { y = y - 1; } break;
+            case DIR_DOWN:  if (y + 1 == world->h) { world->game_over = 1; return; } else { y = y + 1; } break;
+            case DIR_LEFT:  if (x == 0) { world->game_over = 1; return; } else { x = x - 1; } break;
+            case DIR_RIGHT: if (x + 1 == world->w) { world->game_over = 1; return; } else { x = x + 1; } break;
+            default: break;
+        }
+    } else {
+        switch (snake->dir) {
+            case DIR_UP:    y = (y == 0) ? world->h - 1 : y - 1; break;
+            case DIR_DOWN:  y = (y + 1 == world->h) ? 0 : y + 1; break;
+            case DIR_LEFT:  x = (x == 0) ? world->w - 1 : x - 1; break;
+            case DIR_RIGHT: x = (x + 1 == world->w) ? 0 : x + 1; break;
+            default: break;
+        }
     }
     snake->x[0] = x;
     snake->y[0] = y;
-    memset(world->grid, '.', world->w * world->h);
-    world->grid[y * world->w + x] = 'S'; // head
+    // Draw snake head
+    world->grid[y * world->w + x] = 'S';
+    // Draw snake body
     for (size_t i = 1; i < snake->size; ++i) {
         world->grid[snake->y[i] * world->w + snake->x[i]] = 's';
     }

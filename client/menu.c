@@ -11,6 +11,7 @@ static void clear_terminal(void);
 static int menu_time = 0;
 static int menu_x = 0;
 static int menu_y = 0;
+static int menu_obstacles = 0;
 
 static void clear_terminal(void) {
 #ifdef _WIN32
@@ -78,15 +79,21 @@ int menu_show_main(void) {
 int menu_show_obstacles(void) {
     while (1) {
         clear_terminal();
-        printf("With Obstacles (1) Without Obstacles (2)\n");
+        printf("With Obstacles (1)\n");
+        printf("Without obstacles (2)\n");
         printf("> ");
         fflush(stdout);
         char choice[16];
         if (!fgets(choice, sizeof(choice), stdin)) return 1;
         choice[strcspn(choice, "\n")] = '\0';
-        if (strcmp(choice, "1") == 0) return 1;
+        if (strcmp(choice, "1") == 0) {
+            menu_obstacles = 1;
+            if (ask_xy() == -1) return -1;
+            return 1;
+        }
         if (strcmp(choice, "2") == 0) {
-            if (ask_xy() == -1) return -1; // signal to main menu
+            menu_obstacles = 0;
+            if (ask_xy() == -1) return -1;
             return 2;
         }
     }
@@ -94,3 +101,4 @@ int menu_show_obstacles(void) {
 
 int menu_get_x(void) { return menu_x; }
 int menu_get_y(void) { return menu_y; }
+int menu_get_obstacles(void) { return menu_obstacles; }

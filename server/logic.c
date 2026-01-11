@@ -35,7 +35,7 @@ static void place_food(World *w, const Snake *snake) {
     while (1) {
         size_t x = rand() % w->w;
         size_t y = rand() % w->h;
-        if (!is_in_snake(snake, x, y) && !(x == fx && y == fy)) {
+        if (!is_in_snake(snake, x, y) && !(x == fx && y == fy) && w->grid[y * w->w + x] != 'X') {
             w->food_x = x;
             w->food_y = y;
             break;
@@ -71,6 +71,12 @@ void logic_apply_input(World *w, char input) {
             logic_cleanup();
             return; // End function, no further actions
         }
+    }
+    // Check obstacle collision
+    if (w->grid[snake->y[0] * w->w + snake->x[0]] == 'X') {
+        w->game_over = 1;
+        logic_cleanup();
+        return;
     }
     // Check food collision
     if (snake->x[0] == w->food_x && snake->y[0] == w->food_y) {

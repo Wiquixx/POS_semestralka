@@ -62,10 +62,12 @@ int server_run(void) {
                 if (buf[0] == MSG_WORLD_SIZE && n >= 3) {
                     size_t x = (unsigned char)buf[1];
                     size_t y = (unsigned char)buf[2];
-                    if (world_create(&game_world, x, y) == 0) {
+                    int obstacles = 0;
+                    if (n >= 4 && buf[3] == 'O') obstacles = 1; // Example: client sends 'O' for obstacles
+                    if (world_create(&game_world, x, y, obstacles) == 0) {
                         world_initialized = 1;
                         logic_draw_initial(&game_world); // draw snake on grid
-                        printf("World created: %zux%zu\n", x, y);
+                        printf("World created: %zux%zu%s\n", x, y, obstacles ? " with obstacles" : "");
                         // Print the world grid
                         for (size_t row = 0; row < y; ++row) {
                             for (size_t col = 0; col < x; ++col) {

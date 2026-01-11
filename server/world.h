@@ -11,10 +11,11 @@ typedef struct World {
     int game_over; // non-zero when game ended (placeholder)
     unsigned int score; // placeholder score
     size_t food_x, food_y; // position of food
+    int obstacles; // 1 if obstacles are enabled, 0 otherwise
 } World;
 
-// create a new world (placeholder)
-int world_create(World *out, size_t w, size_t h);
+// create a new world; if obstacles is nonzero, generate obstacles
+int world_create(World *out, size_t w, size_t h, int obstacles);
 void world_destroy(World *w);
 
 // tick the world (placeholder)
@@ -25,5 +26,7 @@ unsigned int world_get_score(const World *w);
 
 // Serialize world to a string buffer (buffer must be at least w*h+1 bytes)
 void world_serialize(const World *w, char *buf);
+
+// Obstacles are represented as 'X' in grid
 
 #endif // SERVER_WORLD_H
