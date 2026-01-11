@@ -32,10 +32,10 @@ int server_run(void) {
     if (bind(srv, (struct sockaddr*)&addr, sizeof(addr)) < 0) { perror("bind"); close(srv); return -1; }
     if (listen(srv, 1) < 0) { perror("listen"); close(srv); return -1; }
 
-    printf("Server listening on port %d\n", PROTO_PORT);
+    //printf("Server listening on port %d\n", PROTO_PORT);
     int client = accept(srv, NULL, NULL);
     if (client < 0) { perror("accept"); close(srv); return -1; }
-    printf("Client connected\n");
+    //printf("Client connected\n");
 
     // Send a simple connection-success message to the client
     const char *msg = "CONNECTED\n";
@@ -138,7 +138,7 @@ int server_run(void) {
 
     close(client);
     close(srv);
-    printf("Server shut down\n");
+    //printf("Server shut down\n");
     return 0;
 }
 

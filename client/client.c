@@ -49,8 +49,8 @@ int client_run(Client *c) {
     (void)c;
     unsigned int highscore = 0;
 
-    printf("Simple client\n");
-    printf("Commands: use WASD; q to quit.\n");
+    //printf("Simple client\n");
+    printf("Commands: use WASD; p to pause.\n");
     printf("Current highscore: %u\n", highscore);
 
     // try to connect to server

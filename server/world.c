@@ -40,7 +40,6 @@ int world_create(World *out, size_t w, size_t h, int obstacles) {
                     }
                 }
                 if (valid && out->grid[y * w + x] == '.') {
-                    printf("%d,%d\n", (int)x, (int)y);
                     out->grid[y * w + x] = 'X';
                     placed++;
                 }
@@ -86,7 +85,5 @@ void world_serialize(const World *w, char *buf) {
     idx += sprintf(buf + idx, "SCORE:%u\n", w->score);
     // Append time as a line
     idx += sprintf(buf + idx, "TIME:%u\n", w->time);
-    // Debug: print time value being sent
-    //fprintf(stderr, "[DEBUG] Server sending time: %u\n", w->time);
     buf[idx] = '\0';
 }

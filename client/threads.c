@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+// Move last_time and last_score to file scope
+unsigned int last_time = 0;
+unsigned int last_score = 0;
+
 void *input_thread_func(void *arg) {
     InputThreadArgs *args = (InputThreadArgs *)arg;
     int sockfd = args->sockfd;
@@ -17,7 +21,7 @@ void *input_thread_func(void *arg) {
         if (*paused) {
             // Notify server of pause
             send(sockfd, MSG_PAUSE, strlen(MSG_PAUSE), 0);
-            int action = menu_show_pause();
+            int action = menu_show_pause(last_time, last_score);
             if (action == 1) {
                 // Notify server of resume
                 send(sockfd, MSG_RESUME, strlen(MSG_RESUME), 0);
@@ -61,9 +65,11 @@ void *receiver_thread_func(void *arg) {
     volatile int *paused = args->paused;
     char buf[2048];
     char last_dir[64] = "D (RIGHT)";
-    unsigned int last_score = 0;
     while (*running) {
         if (*paused) {
+            // Show pause menu with current time and score
+            int start_time = menu_get_time();
+            menu_show_pause(last_time, last_score);
             sleep(1); // Sleep 100ms while paused
             continue;
         }
@@ -71,8 +77,7 @@ void *receiver_thread_func(void *arg) {
         if (r <= 0) break;
         buf[r] = '\0';
         if (*paused) continue; // Double-check pause before printing
-        // Debug: print the whole message received from the server
-        //fprintf(stderr, "[DEBUG] Received message:\n%s\n", buf);
+
         // Find last direction marker
         char *last_arrow = strstr(buf, MSG_LAST_ARROW);
         if (last_arrow) {
@@ -87,8 +92,7 @@ void *receiver_thread_func(void *arg) {
             char *time_line = strstr(buf, "TIME:");
             if (time_line) {
                 sscanf(time_line, "TIME:%u", &time);
-                // Debug: print raw time value
-                //fprintf(stderr, "[DEBUG] Parsed time: %u\n", time);
+                last_time = time; // Save last time for game end
             }
             // Strip SCORE and TIME lines from world display
             char *score_line_strip = strstr(buf, "SCORE:");
@@ -116,7 +120,6 @@ void *receiver_thread_func(void *arg) {
                 case DIR_RIGHT: dir_str = "D (RIGHT)"; break;
             }
             snprintf(last_dir, sizeof(last_dir), "%s", dir_str);
-            //printf("Last direction: %s\n", last_dir);
             printf("Current score: %u\n", score);
             // Print time in min:sec format
             printf("Time: %u:%02u\n", time / 60, time % 60);
@@ -124,6 +127,19 @@ void *receiver_thread_func(void *arg) {
         }
         if (strstr(buf, "quit") || strstr(buf, "MENU")) {
             printf("Game ended. Final score: %u\n", last_score);
+            // Print time spent in game
+            int start_time = menu_get_time();
+            if (start_time > 0) {
+                // Time variant: print starting time and time left
+                int time_spent = start_time - last_time;
+                printf("Time spent: %d:%02d (Start: %d:%02d, Left: %d:%02d)\n",
+                    time_spent / 60, time_spent % 60,
+                    start_time / 60, start_time % 60,
+                    last_time / 60, last_time % 60);
+            } else {
+                // Standard variant: just print time elapsed
+                printf("Time spent: %u:%02u\n", last_time / 60, last_time % 60);
+            }
             printf("Press any button to return to menu...\n");
             *running = 0;
             break;

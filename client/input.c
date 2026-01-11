@@ -24,7 +24,8 @@ void input_restore(void) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
 
-int input_read(char *buf, int bufsize) {
+// Internal helper: read a whole line (up to bufsize-1 chars)
+static int input_read(char *buf, int bufsize) {
     if (!buf || bufsize <= 0) return -1;
     if (!fgets(buf, bufsize, stdin)) return -1;
     // remove trailing newline if present
@@ -33,8 +34,8 @@ int input_read(char *buf, int bufsize) {
     return (int)n;
 }
 
-// Reads WASD keys and returns 'W', 'A', 'S', 'D' or 0 if not a movement key
-int input_read_wasd(void) {
+// Internal helper: read WASD keys (kept static because not part of public API)
+static int input_read_wasd(void) {
     char ch;
     if (read(STDIN_FILENO, &ch, 1) != 1) return 0;
     switch (ch) {

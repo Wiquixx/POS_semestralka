@@ -107,7 +107,7 @@ int menu_get_obstacles(void) { return menu_obstacles; }
 int menu_get_time(void) { return menu_time; }
 
 // Shows the pause menu, returns 1 for resume, 2 for back to menu
-int menu_show_pause(void) {
+int menu_show_pause(unsigned int current_time, unsigned int current_score) {
     // Save current terminal settings
     struct termios orig, temp;
     tcgetattr(STDIN_FILENO, &orig);
@@ -118,6 +118,8 @@ int menu_show_pause(void) {
     while (1) {
         clear_terminal();
         printf("PAUSE MENU\n");
+        printf("Current time: %u:%02u\n", current_time / 60, current_time % 60);
+        printf("Current score: %u\n", current_score);
         printf("Resume (1)\n");
         printf("Back to Menu (2)\n");
         printf("> ");
